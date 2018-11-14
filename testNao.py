@@ -6,7 +6,8 @@ import motion
 import qi
 
 # IP = "192.168.43.99"
-IP = "169.254.78.29"
+IP = "169.254.37.89"
+# IP = "127.0.0.1"
 PORT = 9559
 speed = 0.5
 
@@ -51,7 +52,7 @@ tts = nao.ALProxy("ALTextToSpeech", IP, PORT)
 
 # tts.say("I only serve my master, Rick ")
 # tts.say("Can I get you something to drink?")
-# 
+#
 memP = nao.ALProxy("ALMemory",IP,PORT)
 
 # def ForceSensor():
@@ -71,7 +72,7 @@ memP = nao.ALProxy("ALMemory",IP,PORT)
 # 	# print("Right FSR [kg]: % .2f %.2f %.2f %.2f" % (RFsrFL, RFsrFR, RFsrBL, RFsrBR))
 # 	# print("Total Right [kg]: ", sum([RFsrFL, RFsrFR, RFsrBL, RFsrBR]))
 
-# 	# print("Total Weight [kg]: ", sum([LFsrFL, 
+# 	# print("Total Weight [kg]: ", sum([LFsrFL,
 # 	# 	LFsrFR, LFsrBL, LFsrBR,RFsrFL, RFsrFR, RFsrBL, RFsrBR]))
 
 # 	return LFsrFL, LFsrFR, LFsrBL, LFsrBR, RFsrFL, RFsrFR, RFsrBL, RFsrBR
@@ -159,11 +160,15 @@ def main(session):
 	# motionService.wakeUp()
 	# tts.say("I am tired, I am going to sit down again")
 	postureService.goToPosture("StandZero",speed)
-	tts.say("I only serve my master, Rick ")
-	time.sleep(0.5)
-	tts.say("Your wish is my command.")
+	# tts.say("I only serve my master, Rick ")
+	for i in range(10):
+		time.sleep(0.5)
+		postureService.goToPosture("Stand",speed)
+		time.sleep(0.5)
+		postureService.goToPosture("StandZero",speed)
+	postureService.goToPosture("LyingBelly",speed)
 
-
+	time.sleep(10)
 	motionService.rest()
 session = qi.Session()
 
