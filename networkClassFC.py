@@ -289,7 +289,7 @@ class agent:
                 advantageB = (advantageB - advantageB.mean()) / (advantageB.std() + 1e-8) # normalize the advantage function for faster convergence
                 feedDict = {self.observationPH: observationsB, self.oldValuePredPH:valuesB.reshape((-1,1)), self.actionsPH: actionsB, self.actionsProbOldPH: actionProbOldB, self.advantagePH: advantageB, self.disRewardsPH: disRewardsB.reshape((-1,1)), self.learningRatePH: lr, self.epsilonPH: epsilon}
                 ## feedDict is used to feed the training data to the placeholders created when the agent is initialized
-                print(feedDict)
+                # print(feedDict)
                 pLoss, vLoss,  _ = self.sess.run([self.pLoss, self.vLoss, self.train], feedDict)
 
         return pLoss, vLoss

@@ -6,11 +6,12 @@ import motion
 import qi
 from gym import spaces
 import numpy as np
-IP = "169.254.36.168"
-# IP = "127.0.0.1"
+IP = "169.254.65.237"
+IP = "127.0.0.1"
 PORT = 9559
+PORT = 9595
 SPEED = 0.1
-
+from naofunctions import *
 
 class NaoMotion:
 
@@ -59,16 +60,24 @@ class NaoMotion:
 		return self.motionService.getAngles(self.bodyNames,True), [self.memP.getData(path) for path in self.pathNames] #True forces use of sensors
 
     def step(self,action):
-        print(action.shape, action)
+        # print(action.shape, action)
         action = np.clip(action, self.low, self.high)
         self.setAll(action)
         angles, sensors = self.getAll()
-        return angles + sensors, 1 + sensors[10], False, None # return observation, rewards signal (acceleration forward sensors[10] verify), dones, info
+
+        done = not insidePolygon(self.COM("Body",1, True), scalePolygon(np.array(self.sPoly(1,True)), 0.78)) #scale 0.78 based on previous tests
+        penalty = 0
+        if done:
+            print("DONE!!!!!!!!!!!!!DONE")
+            penalty = -10
+        return angles + sensors, 1 + sensors[10]-penalty, done, None # return observation, rewards signal (acceleration forward sensors[10] verify), dones, info
 
     def reset(self):
-        self.motionService.setFallManagerEnabled(False)
+        # self.motionService.setFallManagerEnabled(False)
+        self.motionService.rest()
         self.motionService.wakeUp()
         angles, sensors = self.getAll()
+        print(angles)
         return angles+sensors
 
     def rest(self):

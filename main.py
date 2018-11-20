@@ -8,7 +8,7 @@ from networkClassFC import *
 import time
 import os
 from naoClass import *
-
+from naofunctions import *
 
 
 """
@@ -21,7 +21,7 @@ def main(play=False, nsteps=30, clippingFactor=lambda f: 0.2, epochs=10, nMiniBa
     env = "NaoMotion"
     saveInterval = 30000
     logInterval = 4096
-    numSteps = 40
+    numSteps = 100
     Lamda = 0.95
     gamma = 0.99
     networkStyle='copy'
