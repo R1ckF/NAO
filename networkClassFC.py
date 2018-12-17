@@ -284,7 +284,7 @@ class agent:
         indices = range(0,lenght,step)
         randomIndex = np.arange(lenght)
         for _ in range(self.epoch):
-            np.random.shuffle(randomIndex)
+            # np.random.shuffle(randomIndex)
             for start in indices:
                 end = start+step
                 ind = randomIndex[start:end].astype(np.int32)
@@ -297,7 +297,7 @@ class agent:
                 advantageB = (advantageB - advantageB.mean()) / (advantageB.std() + 1e-8) # normalize the advantage function for faster convergence
                 feedDict = {self.observationPH: observationsB, self.oldValuePredPH:valuesB.reshape((-1,1)), self.actionsPH: actionsB, self.actionsProbOldPH: actionProbOldB, self.advantagePH: advantageB, self.disRewardsPH: disRewardsB.reshape((-1,1)), self.learningRatePH: lr, self.epsilonPH: epsilon}
                 ## feedDict is used to feed the training data to the placeholders created when the agent is initialized
-                # self.LOGGER.debug(feedDict)
+                self.LOGGER.debug(feedDict)
                 pLoss, vLoss,  _ = self.sess.run([self.pLoss, self.vLoss, self.train], feedDict)
 
         return pLoss, vLoss
