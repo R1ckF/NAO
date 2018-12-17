@@ -75,6 +75,7 @@ def main(play=False, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, ep
     env = [buildEnv(envName, monitoring=monitor if i==0 else None, normalize=normalize) for i in range(numEnvs)]
     # env.seed(seed)
     env = multiEnv(env)
+    env = env.envL[0]
 
 
 
@@ -93,7 +94,7 @@ def main(play=False, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, ep
 
     ##reset enviroment
     obs = env.reset()
-    # obs = obs.reshape([1]+ob_shape)
+    obs = obs.reshape([1]+ob_shape)
 
 
     ##create list for saving
@@ -122,13 +123,13 @@ def main(play=False, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, ep
         Values.append(value)
         LogProb.append(logProb)
         # apply action to environment and retreive next observation
-        obs, reward, done, info = env.step(action, timestep)
-        # obs= obs.reshape([1]+ob_shape)
+        obs, reward, done, info = env.step(action)
+        obs= obs.reshape([1]+ob_shape)
 
         #store in lists
         Dones.append(done)
-        Rewards.append(reward)
-        # EpisodeRewards.append(reward)
+        Rewards.append(info['NReward'] if env.NORMALIZED else reward)
+        EpisodeRewards.append(reward)
         LOGGER.debug("reward: %s action: %s done: %s", reward, action, done)
 
         if (timestep+1) % nsteps == 0:
@@ -144,18 +145,18 @@ def main(play=False, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, ep
             pLoss, vLoss = Agent.trainNetwork(Observations, Actions, DiscRewards, Values, LogProb, Advantage, lr, epsilon) # train network
             Rewards, Actions, Observations, Values, LogProb, Dones = [],[],[],[],[],[] # create new lists for next batch
 
-        # if done: # current episode is finished and needs reset. Also used as a checkpoint for saving intermediate results
-        #     tnow = time.time()
-        #     obs = env.reset()
-        #     # LOGGER.debug("DONE!!: ", EpisodeRewards, sum(EpisodeRewards), len(EpisodeRewards) )
-        #     # obs= obs.reshape([1]+ob_shape)
-        #     latestReward = (sum(EpisodeRewards))
-        #     latestLength = len(EpisodeRewards)
-        #     EpisodeRewards = []
-        #     allEpR.append(latestReward)
-        #     Timesteps.append(timestep)
-        #     ElapsedTime.append(tnow-tStart)
-        #     EpisodeLength.append(latestLength)
+        if done: # current episode is finished and needs reset. Also used as a checkpoint for saving intermediate results
+            tnow = time.time()
+            obs = env.reset()
+            # LOGGER.debug("DONE!!: ", EpisodeRewards, sum(EpisodeRewards), len(EpisodeRewards) )
+            obs= obs.reshape([1]+ob_shape)
+            latestReward = (sum(EpisodeRewards))
+            latestLength = len(EpisodeRewards)
+            EpisodeRewards = []
+            allEpR.append(latestReward)
+            Timesteps.append(timestep)
+            ElapsedTime.append(tnow-tStart)
+            EpisodeLength.append(latestLength)
 
         if (timestep+1) % saveInterval == 0: # save current network parameters to disk
             savePath = os.path.join(resultsPath,"checkpoints"+str(timestep+1))
@@ -164,9 +165,9 @@ def main(play=False, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, ep
         if (timestep+1) % logInterval == 0: # print summary to screen
             esttime = (time.time()-tStart)/float(timestep)*(numSteps-timestep)
             esttime = time.strftime("%H:%M:%S", (time.gmtime(esttime)))
-            LOGGER.info("average reward: %s", int(np.mean(env.AllEpR[-50:])))
-            LOGGER.info("Latest lenght: %s", int(np.mean(env.EpisodeLength[-50:])))
-            LOGGER.info("Total episodes: %s", int(len(env.AllEpR)))
+            LOGGER.info("average reward: %s", int(np.mean(allEpR[-50:])))
+            LOGGER.info("Latest lenght: %s", int(np.mean(EpisodeLength[-50:])))
+            LOGGER.info("Total episodes: %s", int(len(allEpR)))
             LOGGER.info("Estimated time remaining: %s", esttime)
             LOGGER.info("Time elapsed: %s", time.strftime("%H:%M:%S", (time.gmtime(time.time()-tStart))))
             LOGGER.info("Timestep: %s", timestep+1)
@@ -180,20 +181,20 @@ def main(play=False, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, ep
 
         while not done:
             # LOGGER.debug(done)
-            obs, reward, done, info = env.envL[0].step(env.envL[0].action_space.sample())
+            obs, reward, done, info = env.step(env.action_space.sample())
 
     if play and not monitor: # provide short visual render of resulting network
         av = 0
         for _ in range(10):
             rewards = 0
-            obs = env.envL[0].reset()
+            obs = env.reset()
             done = False
             while not done:
                 env.render()
                 # time.sleep(1/60.)
                 # obs= obs.reshape([1]+ob_shape)
                 _, logProb, value,action = Agent.step(obs.reshape(1,-1))
-                obs, reward, done, info = env.envL[0].step(action)
+                obs, reward, done, info = env.step(action)
                 rewards +=  reward
                 av += reward
             # LOGGER.info("reward: %s", rewards)
