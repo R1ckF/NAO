@@ -307,8 +307,8 @@ class agent:
 
     def saveNetwork(self,name, env): ## function that saves the current network parameters
         savePath = self.saver.save(self.sess,name+'.ckpt')
-        with open((name+'.pkl'), 'wb') as f:
-            pickle.dump(env.envL[0], f)
+        # with open((name+'.pkl'), 'wb') as f:
+        #     pickle.dump(env.envL[0], f)
         self.LOGGER.info("Model saved in path: %s" % savePath)
 
 

@@ -16,7 +16,7 @@ import pickle
 Main function used for running each training run
 Takes the variable parameters that are tested as inputs
 """
-def main(play=False, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, epochs=10,
+def main(play=True, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, epochs=10,
         nMiniBatch=4, learningRate=lambda f: f * 3.0e-4, activation=tf.nn.relu, numNodes=[16,16],
          seed=0, loglevel=logging.INFO, checkpoint=None):
     ##define logger for printing
@@ -190,7 +190,7 @@ def main(play=False, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, ep
             obs = env.reset()
             done = False
             while not done:
-                env.render()
+                # env.render()
                 # time.sleep(1/60.)
                 # obs= obs.reshape([1]+ob_shape)
                 _, logProb, value,action = Agent.step(obs.reshape(1,-1))
@@ -202,7 +202,7 @@ def main(play=False, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, ep
     sess.close()
     # env.close()
 
-    return env.AllEpR, env.TimeSteps, env.ElapsedTime, resultsPath
+    return allEpR, Timesteps, ElapsedTime, resultsPath
 
 if __name__ == "__main__":
 
