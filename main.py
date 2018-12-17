@@ -16,8 +16,8 @@ import pickle
 Main function used for running each training run
 Takes the variable parameters that are tested as inputs
 """
-def main(play=True, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, epochs=10,
-        nMiniBatch=4, learningRate=lambda f: f * 3.0e-4, activation=tf.nn.relu, numNodes=[16,16],
+def main(play=True, nsteps=10, loadPath=None, clippingFactor=lambda f: 0.2, epochs=1,
+        nMiniBatch=2, learningRate=lambda f: f * 3.0e-4, activation=tf.nn.relu, numNodes=[16,16],
          seed=0, loglevel=logging.INFO, checkpoint=None):
     ##define logger for printing
     LOGGER = logging.getLogger()
@@ -28,7 +28,7 @@ def main(play=True, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, epo
     envName = "CartPole-v0"
     numEnvs = 1
     logInterval = 1000
-    numSteps = 10000
+    numSteps = 20
     Lamda = 0.95
     gamma = 0.99
     networkStyle='copy'
@@ -47,7 +47,7 @@ def main(play=True, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, epo
     network_args = {'networkOption': 'fc'}
     for item in ['activation', 'epochs', 'nMiniBatch','loadModel','networkStyle', 'c1', 'numNodes']:
         network_args[item]=locals()[item]
-    # network_args['kernel_initializer'] = tf.ones_initializer()
+    network_args['kernel_initializer'] = tf.ones_initializer()
     LOGGER.debug(network_args)
     ## ensure values match to avoid errors later on
     assert ((nsteps/nMiniBatch) % 1 == 0)
@@ -55,6 +55,7 @@ def main(play=True, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, epo
     #create environement
     def buildEnv(envName, monitoring=False, normalize=False):
         env = gym.make(envName)
+        env.seed(0)
         env.NORMALIZED=False
         env.MONITOR = False
         if monitoring:
@@ -117,7 +118,7 @@ def main(play=True, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, epo
         Observations.append(obs)
         # print(obs)
         #input observation and get the action, logarthmic probabilty and value from the agent
-        action, logProb, value, _ = Agent.step(obs)
+        _, logProb, value, action = Agent.step(obs)
         # store in lists
         Actions.append(action)
         Values.append(value)
@@ -130,7 +131,7 @@ def main(play=True, nsteps=128, loadPath=None, clippingFactor=lambda f: 0.2, epo
         Dones.append(done)
         Rewards.append(info['NReward'] if env.NORMALIZED else reward)
         EpisodeRewards.append(reward)
-        LOGGER.debug("reward: %s action: %s done: %s", reward, action, done)
+        LOGGER.debug("reward: %s action: %s done: %s", info['NReward'] if env.NORMALIZED else reward, action, done)
 
         if (timestep+1) % nsteps == 0:
 
@@ -210,7 +211,7 @@ if __name__ == "__main__":
     # for i in range(50000, 350000, 50000):
         # print("checkpoint ", i)
     # for i in range(10):
-    allEpR, Timesteps, ElapsedTime, resultspath = main(loglevel=logging.INFO)#, loadPath="results/Hopper-v264_2_programtest", checkpoint='checkpoints'+str(i))#)
+    allEpR, Timesteps, ElapsedTime, resultspath = main(loglevel=logging.DEBUG)#, loadPath="results/Hopper-v264_2_programtest", checkpoint='checkpoints'+str(i))#)
 
 
 
