@@ -70,11 +70,11 @@ class network:
 
         ##building Fully connected network with amount of layers and nodes as given by network_args.
         ## 2 layers and 64 units corresponds to the test that were completed in the PPO paper
-    def fcNetwork(self, observationPH, numLayers = 2, numNodes=64, **network_args):
+    def fcNetwork(self, observationPH, numNodes = [64,64], **network_args):
         self.LOGGER.debug("obsPH: %s",observationPH.shape)
         vector = observationPH
-        for i in range(numLayers):
-            vector = self.fc(vector, numNodes, **network_args)
+        for i,nodes in enumerate(numNodes):
+            vector = self.fc(vector, nodes, **network_args)
             self.LOGGER.debug("layer"+str(i)+": %s",vector.shape)
         return vector
 
@@ -183,7 +183,7 @@ class agent:
                 self.actor = network(self.env, self.networkOption, self.sess, self.LOGGER)
                 self.actor.buildNetwork(self.observationPH,**network_args)
                 del network_args['numNodes']
-                del network_args['numLayers']
+                # del network_args['numLayers']
                 self.actor.createStep(**network_args)
                 self.meanActionOutput = self.actor.meanActionOutput
                 self.action = self.actor.action
@@ -199,7 +199,7 @@ class agent:
                 self.critic = network(self.env, self.networkOption, self.sess, self.LOGGER)
                 self.critic.buildNetwork(self.observationPH,**network_args)
                 del network_args['numNodes']
-                del network_args['numLayers']
+                # del network_args['numLayers']
                 self.critic.createStep(**network_args)
                 self.value = self.critic.value
 
@@ -268,7 +268,7 @@ class agent:
 
     def step(self, observation):
         # function that uses the observation to calculate the action, logProbabilty and value of the network and returns them
-        action, logProb, value, meanAction = self.sess.run([self.action,self.logProb, self.value, self.meanActionOutput], feed_dict= {self.observationPH : observation.reshape(1,-1)})
+        action, logProb, value, meanAction = self.sess.run([self.action,self.logProb, self.value, self.meanActionOutput], feed_dict= {self.observationPH : observation})
         return  action.squeeze(), logProb.squeeze(), value.squeeze(), meanAction.squeeze()
 
 
@@ -303,12 +303,12 @@ class agent:
         return pLoss, vLoss
 
     def getValue(self, observation): ## functions used to get the value of the current observations. Needed for the advantage calculation
-        return (self.sess.run(self.value,{self.observationPH: observation.reshape(1,-1)}))
+        return (self.sess.run(self.value,{self.observationPH: observation}))
 
     def saveNetwork(self,name, env): ## function that saves the current network parameters
         savePath = self.saver.save(self.sess,name+'.ckpt')
-        # with open((name+'.pkl'), 'wb') as f:
-        #     pickle.dump(env, f)
+        with open((name+'.pkl'), 'wb') as f:
+            pickle.dump(env.envL[0], f)
         self.LOGGER.info("Model saved in path: %s" % savePath)
 
 
