@@ -3,7 +3,7 @@ import numpy as np
 # import cv2
 from gym import spaces
 from collections import deque
-
+import time
 # class adjustFrame(gym.ObservationWrapper):
 #
 #     def __init__(self, env):
@@ -53,6 +53,51 @@ from collections import deque
 #
 #     def close(self):
 #         return self.env.close()
+
+
+class multiEnv:
+
+    def __init__(self, envL):
+        self.envL = envL
+        self.numEnvs = len(self.envL)
+        self.AllEpR = []
+        self.TimeSteps = []
+        self.EpisodeLength = []
+        self.ElapsedTime = []
+        self.StartT = time.time()
+        self.observation_space = self.envL[0].observation_space
+        self.action_space = self.envL[0].action_space
+
+    def reset(self):
+        for env in self.envL:
+            env.runningRewards = 0
+            env.runningLength = 0
+        return np.array([env.reset() for env in self.envL]).reshape(-1,self.observation_space.shape[0])
+
+    def step(self, action, timestep):
+        obsL, rewardL, doneL, infoL = [],[],[],[]
+        if self.numEnvs==1:
+            action = [action]
+        for i, (a, env)  in enumerate(zip(action, self.envL)):
+            obs, reward, done, info = env.step(a)
+            env.runningRewards += reward
+            env.runningLength += 1
+            if done:
+                obs = env.reset()
+                self.AllEpR.append(env.runningRewards)
+                self.TimeSteps.append(timestep*self.numEnvs)
+                self.EpisodeLength.append(env.runningLength)
+                self.ElapsedTime.append(time.time()-self.StartT)
+                env.runningRewards = 0
+                env.runningLength = 0
+            obsL.append(obs)
+            rewardL.append(info['NReward'] if env.NORMALIZED else reward)
+            doneL.append(done)
+            infoL.append(info)
+        return np.array(obsL).reshape(-1,self.observation_space.shape[0]), rewardL, doneL, infoL
+
+    def render(self):
+        self.envL[0].render()
 
 class Normalize(gym.Wrapper):
     """
