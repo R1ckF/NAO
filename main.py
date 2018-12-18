@@ -131,14 +131,14 @@ def main(play=True, nsteps=10, loadPath=None, clippingFactor=lambda f: 0.2, epoc
         Dones.append(done)
         Rewards.append(info['NReward'] if env.NORMALIZED else reward)
         EpisodeRewards.append(reward)
-        LOGGER.debug("reward: %s action: %s done: %s", info['NReward'] if env.NORMALIZED else reward, action, done)
+        LOGGER.debug("reward: %s action: %s done: %s value: %s", info['NReward'] if env.NORMALIZED else reward, action, done, value)
 
         if (timestep+1) % nsteps == 0:
 
             lr = learningRate(1-(timestep+1-nsteps)/numSteps) # calc current learning rate
             epsilon = clippingFactor(1-(timestep+1-nsteps)/numSteps) #calc current epsilon
             Dones, Rewards, Observations, Actions, Values, LogProb = np.asarray(Dones), np.asarray(Rewards,dtype=np.float32),  np.asarray(Observations,dtype=np.float32).reshape([nsteps*numEnvs]+ob_shape),  np.asarray(Actions,dtype=np.float32).flatten(),  np.asarray(Values,dtype=np.float32),  np.asarray(LogProb,dtype=np.float32).flatten()
-            # value = Agent.getValue(obs) # get value from latest observation
+            value = Agent.getValue(obs) # get value from latest observation
             LOGGER.debug([Dones.shape, Rewards.shape, Observations.shape, Actions.shape, Values.shape, LogProb.shape])
             Advantage, DiscRewards = advantageEST(Rewards, Values, Dones, value, gamma,Lamda) #calculate advantange and discounted rewards according to the method in the article
             LOGGER.debug([Advantage.shape, DiscRewards.shape])
