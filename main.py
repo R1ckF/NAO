@@ -16,7 +16,7 @@ import pickle
 Main function used for running each training run
 Takes the variable parameters that are tested as inputs
 """
-def main(play=True, nsteps=10, loadPath=None, clippingFactor=lambda f: 0.2, epochs=10,
+def main(play=True, nsteps=10, loadPath=None, clippingFactor=lambda f: 0.2, epochs=1,
         nMiniBatch=2, learningRate=lambda f: f * 3.0e-4, activation=tf.nn.relu, numNodes=[16,16],
          seed=0, loglevel=logging.INFO, checkpoint=None):
     ##define logger for printing
@@ -28,7 +28,7 @@ def main(play=True, nsteps=10, loadPath=None, clippingFactor=lambda f: 0.2, epoc
     envName = "CartPole-v0"
     numEnvs = 1
     logInterval = 1000
-    numSteps = 30
+    numSteps = 15
     Lamda = 0.95
     gamma = 0.99
     networkStyle='copy'
@@ -117,7 +117,7 @@ def main(play=True, nsteps=10, loadPath=None, clippingFactor=lambda f: 0.2, epoc
         Observations.append(obs)
         # print(obs)
         #input observation and get the action, logarthmic probabilty and value from the agent
-        action, logProb, value, _ = Agent.step(obs)
+        _, logProb, value, action = Agent.step(obs)
         # store in lists
         Actions.append(action)
         Values.append(value)
@@ -130,14 +130,19 @@ def main(play=True, nsteps=10, loadPath=None, clippingFactor=lambda f: 0.2, epoc
         Dones.append(done)
         Rewards.append(reward)
         # EpisodeRewards.append(reward)
-        LOGGER.debug("reward: %s action: %s done: %s", reward, action, done)
+        LOGGER.debug("reward: %s action: %s done: %s values: %s", reward, action, done, value)
 
         if (timestep+1) % nsteps == 0:
 
             lr = learningRate(1-(timestep+1-nsteps)/numSteps) # calc current learning rate
             epsilon = clippingFactor(1-(timestep+1-nsteps)/numSteps) #calc current epsilon
-            Dones, Rewards, Observations, Actions, Values, LogProb = np.asarray(Dones), np.asarray(Rewards,dtype=np.float32),  np.asarray(Observations,dtype=np.float32).reshape([nsteps*numEnvs]+ob_shape),  np.asarray(Actions,dtype=np.float32).flatten(),  np.asarray(Values,dtype=np.float32),  np.asarray(LogProb,dtype=np.float32).flatten()
-            # value = Agent.getValue(obs) # get value from latest observation
+            Dones, Rewards, Observations, Actions, Values, LogProb =\
+             np.asarray(Dones).reshape(nsteps*numEnvs,-1), np.asarray(Rewards,dtype=np.float32).reshape(nsteps*numEnvs,-1),\
+             np.asarray(Observations,dtype=np.float32).reshape([nsteps*numEnvs]+ob_shape),\
+             np.asarray(Actions,dtype=np.float32).flatten(),\
+             np.asarray(Values,dtype=np.float32).reshape(nsteps*numEnvs,-1),\
+             np.asarray(LogProb,dtype=np.float32).flatten()
+            value = Agent.getValue(obs) # get value from latest observation
             LOGGER.debug([Dones.shape, Rewards.shape, Observations.shape, Actions.shape, Values.shape, LogProb.shape])
             Advantage, DiscRewards = advantageEST(Rewards, Values, Dones, value, gamma,Lamda) #calculate advantange and discounted rewards according to the method in the article
             LOGGER.debug([Advantage.shape, DiscRewards.shape])
